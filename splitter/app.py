@@ -53,18 +53,19 @@ class App:
         if self.engine:
             self.stop()
             return
-        ids = self.ticked_ids()
+        default = default_output_id()  # captured before make_source() so the watch compares like with like
+        ids = [d for d in self.ticked_ids() if d != default]
         try:
             engine = Engine(make_source(), {d: make_target(d) for d in ids}, lambda d, e: self.drops.append((d, e)))
-        except ValueError as e:
+            self.drops.clear()
+            engine.start()
+            for d in ids:
+                engine.set_volume(d, self.state[d][1].get())
+        except Exception as e:
             messagebox.showerror("Digital Audio Splitter", str(e))
             return
-        self.drops.clear()
-        self.default_at_start = default_output_id()
+        self.default_at_start = default
         self.engine = engine
-        engine.start()
-        for d in ids:
-            engine.set_volume(d, self.state[d][1].get())
         self.start_btn.config(text="Stop")
         self.set_idle_state("disabled")
 
@@ -73,36 +74,36 @@ class App:
             self.engine.stop()
             self.engine = None
         self.start_btn.config(text="Start")
-        self.set_idle_state("normal")
-        for _, status in self.rows.values():
-            status.config(text="")
+        self.refresh_btn.config(state="normal")
+        self.build_rows()  # re-marks the real default row and clears statuses
 
     def set_idle_state(self, state):
         self.refresh_btn.config(state=state)
-        default = default_output_id()
-        for d, (box, _) in self.rows.items():
-            if state == "normal" and d == default:
-                continue  # the default row stays disabled
+        for box, _ in self.rows.values():
             box.config(state=state)
 
     def tick(self):
-        if self.engine:
-            source_error = next((e for d, e in self.drops if d == "__source__"), None)
-            if source_error:
-                self.stop()
-                messagebox.showerror("Digital Audio Splitter", f"Capture stopped: {source_error}")
-            elif default_output_id() != self.default_at_start:
-                self.stop()
-                messagebox.showinfo("Digital Audio Splitter", "Default output device changed — press Start again.")
-            else:
-                for d, (underruns, overruns, dropped) in self.engine.stats().items():
-                    self.rows[d][1].config(text="dropped" if dropped else f"underruns {underruns} · overruns {overruns}")
-        self.root.after(500, self.tick)
+        try:
+            if self.engine:
+                source_error = next((e for d, e in self.drops if d == "__source__"), None)
+                if source_error:
+                    self.stop()
+                    messagebox.showerror("Digital Audio Splitter", f"Capture stopped: {source_error}")
+                elif default_output_id() != self.default_at_start:
+                    self.stop()
+                    messagebox.showinfo("Digital Audio Splitter", "Default output device changed — press Start again.")
+                else:
+                    for d, (underruns, overruns, dropped) in self.engine.stats().items():
+                        self.rows[d][1].config(text="dropped" if dropped else f"underruns {underruns} · overruns {overruns}")
+        finally:
+            self.root.after(500, self.tick)
 
     def close(self):
-        if self.engine:
-            self.engine.stop()
-        self.root.destroy()
+        try:
+            if self.engine:
+                self.engine.stop()
+        finally:
+            self.root.destroy()
 
 
 def run():
