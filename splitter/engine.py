@@ -48,7 +48,7 @@ class Engine:
 
     def _capture(self):
         try:
-            with self._source.recorder(SAMPLERATE, CHANNELS, BLOCK) as rec:
+            with self._source.recorder(SAMPLERATE, CHANNELS, BLOCK * 8) as rec:
                 while not self._stop.is_set():
                     data = rec.record(BLOCK)
                     for i, buf in self._bufs.items():
@@ -61,7 +61,7 @@ class Engine:
     def _play(self, device_id: str):
         buf = self._bufs[device_id]
         try:
-            with self._targets[device_id].player(SAMPLERATE, CHANNELS, BLOCK) as player:
+            with self._targets[device_id].player(SAMPLERATE, CHANNELS, BLOCK * 8) as player:
                 while not self._stop.is_set():
                     player.play(buf.pull(BLOCK) * self._gains[device_id])
         except Exception as err:

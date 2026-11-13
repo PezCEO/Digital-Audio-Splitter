@@ -9,6 +9,15 @@ Copies whatever your PC plays on its default output device to extra output devic
 3. Tick the extra devices you want, then press Start.
 4. Use each device's slider to set its volume.
 
+A Bluetooth headset appears twice in the list. Tick the "Headphones" (stereo) entry, NOT the "Headset ... Hands-Free" one: Hands-Free switches the headset to phone-call quality.
+
+## What the counters mean
+
+- Underruns: the headset briefly ran out of audio (a tiny gap).
+- Overruns: audio piled up and some was skipped to keep the delay down.
+
+Occasional ones are fine; steadily climbing numbers mean a problem.
+
 ## Known limitation
 
 Bluetooth devices play a little later than wired or default devices. Syncing them is not handled in this version.
@@ -21,6 +30,7 @@ Needs Windows and Python. Create the `.venv` with the requirements and PyInstall
 
 1. Play music on the default device. Tick the USB headset and the Bluetooth headset. Press Start. All three play.
 2. Move each slider: only that headset changes volume.
-3. Leave it running for 30+ minutes. Afterwards, there is no growing delay, and the overrun/underrun counts stay low. Pausing the music adds about 1 underrun per pause, which is expected.
+3. Leave it running for 30+ minutes. Afterwards, there is no growing delay, and the overrun/underrun counts stay low. Pausing the music adds 1–2 underruns per pause, which is expected.
 4. Turn off one headset mid-play: its row shows "dropped" and the other keeps playing.
-5. Change the Windows default output device: the app stops with the message.
+5. Change the Windows default output device: the app stops with the message "Default output device changed — press Start again."
+6. Walk a Bluetooth headset out of range: Windows may not report it gone, so its row may show climbing overruns instead of "dropped". The other headsets keep playing.
